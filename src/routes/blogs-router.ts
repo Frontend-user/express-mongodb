@@ -23,7 +23,7 @@ export const blogsRouter = Router({})
 blogsRouter.get('/',
     async (req: Request, res: Response) => {
 
-        const blogs =    await getData()
+        const blogs =  await getData()
         res.status(200).send(blogs)
     })
 

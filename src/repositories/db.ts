@@ -1,16 +1,19 @@
-
-// const MongoCLient = require("mongodb");
-
-// const mongoURI = process.env.MONGO_URL || 'mongodb://0.0.0.0:27017'
 import {MongoClient} from 'mongodb'
 import {BlogType} from "../types/blog-type";
-// console.log(process.env.MONGO_URL)
 
-// const mongoUri = process.env.mongoUri = 'ds'
-const url = 'mongodb+srv://adminmongodb:123pas123@cluster0.x20tuj1.mongodb.net/blogs?retryWrites=true&w=majority'
+import dotenv from 'dotenv'
+dotenv.config()
+
+const url = process.env.MONGO_URL
+
+if(!url){
+    throw new Error('! Url doesn\'t found')
+}
+
 console.log('url',url)
+
 export const client = new MongoClient(url)
-export let  exportBlogs = []
+export let  exportBlogs:any[] = []
 export const getData = async  () => {
    await client.connect()
         .then(() => {
@@ -42,7 +45,7 @@ export const createBlog = async () => {
             const blogsCollection = client.db().collection('blogs');
             const newBlog: BlogType = {
                 id: String(Date.now()),
-                name: 'string name',
+                name: 'TESTTT as',
                 description:  'string decsc',
                 websiteUrl:  'string Web site'
             }

@@ -16,8 +16,6 @@ const express_1 = __importDefault(require("express"));
 const blogs_router_1 = require("./routes/blogs-router");
 const posts_router_1 = require("./routes/posts-router");
 const db_1 = require("./repositories/db");
-const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
 const postValidators = [];
 const app = (0, express_1.default)();
 const jsonBodyMiddleware = express_1.default.json();

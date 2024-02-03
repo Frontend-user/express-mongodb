@@ -4,8 +4,6 @@ import {postsRouter} from "./routes/posts-router";
 import {runDb} from "./repositories/db";
 
 
-import dotenv from 'dotenv'
-dotenv.config()
 
 const postValidators = []
 const app = express()
