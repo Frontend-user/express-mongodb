@@ -15,6 +15,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const blogs_router_1 = require("./routes/blogs-router");
 const posts_router_1 = require("./routes/posts-router");
+const db_1 = require("./repositories/db");
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const postValidators = [];
 const app = (0, express_1.default)();
 const jsonBodyMiddleware = express_1.default.json();
@@ -26,6 +29,7 @@ app.get('/', (req, res) => {
 app.use('/blogs', blogs_router_1.blogsRouter);
 app.use('/posts', posts_router_1.postsRouter);
 const startApp = () => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, db_1.runDb)();
     app.listen(PORT, () => {
         console.log(`START on PORT ${PORT}`);
     });

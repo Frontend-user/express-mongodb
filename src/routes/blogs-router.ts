@@ -5,6 +5,7 @@ import {
 } from "../validation/blogs-validation";
 import {authorizationMiddleware} from "../validation/auth-validation";
 import {BlogType} from "../types/blog-type";
+import {createBlog, exportBlogs, getData} from "../repositories/db";
 
 const blogValidators = [
     authorizationMiddleware,
@@ -20,7 +21,9 @@ export const blogsRouter = Router({})
 
 
 blogsRouter.get('/',
-    (req: Request, res: Response) => {
+    async (req: Request, res: Response) => {
+
+        const blogs =    await getData()
         res.status(200).send(blogs)
     })
 
@@ -37,8 +40,8 @@ blogsRouter.get('/:id',
 )
 blogsRouter.post('/',
     ...blogValidators,
-    (req: Request, res: Response) => {
-
+    async (req: Request, res: Response) => {
+       await createBlog()
         const newBlog: BlogType = {
             id: String(Date.now()),
             name: req.body.name,
