@@ -12,6 +12,7 @@ if(!url){
 
 console.log('url',url)
 
+
 export const client = new MongoClient(url)
 export let  exportBlogs:any[] = []
 export const getData = async  () => {
