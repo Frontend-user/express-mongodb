@@ -18,7 +18,7 @@ exports.postContentValidation = (0, express_validator_1.body)('content').trim().
 exports.postBlogIdValidation = (0, express_validator_1.body)('blogId').trim().isLength({ min: 1, max: 300 }).isString().custom((value, { req }) => {
     let validIds = [];
     for (const blog of blogs_router_1.blogs) {
-        validIds.push(blog.id);
+        validIds.push(blog._id);
     }
     if (!validIds.includes(value)) {
         throw new Error('blogId is wrong');

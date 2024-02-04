@@ -14,6 +14,8 @@ const express_1 = require("express");
 const blogs_validation_1 = require("../validation/blogs-validation");
 const auth_validation_1 = require("../validation/auth-validation");
 const db_1 = require("../repositories/db");
+// import {ObjectId} from "mongodb";
+const { ObjectId } = require('mongodb');
 const blogValidators = [
     auth_validation_1.authorizationMiddleware,
     blogs_validation_1.blogDescValidation,
@@ -25,39 +27,66 @@ const blogValidators = [
 exports.blogs = [];
 exports.blogsRouter = (0, express_1.Router)({});
 exports.blogsRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const blogs = yield (0, db_1.getData)();
-    res.status(200).send(blogs);
-}));
-exports.blogsRouter.get('/:id', blogs_validation_1.blogIdValidation, (req, res) => {
-    let findBlog = exports.blogs.find(b => b.id === req.params.id);
-    if (findBlog) {
-        res.status(200).send(findBlog);
+    // const blogs = await client.db('blogs').collection('blogs').find({})
+    // const blogs =  await getData()
+    // console.log(blogs,'blogs')
+    // res.status(200).send([])
+    try {
+        yield db_1.client.connect();
+        const blogsCollection = yield db_1.client.db('blogs').collection('blogs').find({}).toArray();
+        res.status(200).send(blogsCollection);
     }
-    else {
+    catch (error) {
+        console.error('Ошибка при получении данных из коллекции:', error);
+        res.status(500).send('Ошибка при получении данных из коллекции');
+    }
+}));
+exports.blogsRouter.get('/:id', blogs_validation_1.blogIdValidation, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield db_1.client.connect();
+        const responseBlog = yield db_1.client.db('blogs').collection('blogs').findOne({ _id: new ObjectId(req.params.id) });
+        // console.log(responseBlog)
+        if (responseBlog) {
+            res.status(200).send(responseBlog);
+        }
+        else {
+            res.sendStatus(404);
+        }
+    }
+    catch (error) {
+        console.error('Ошибка при получении данных из коллекции:', error);
         res.sendStatus(404);
     }
-});
+}));
 exports.blogsRouter.post('/', ...blogValidators, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    yield (0, db_1.createBlog)();
-    const newBlog = {
-        id: String(Date.now()),
-        name: req.body.name,
-        description: req.body.description,
-        websiteUrl: req.body.websiteUrl
-    };
-    exports.blogs.push(newBlog);
-    res.status(201).send(newBlog);
+    try {
+        const newBlog = {
+            name: req.body.name,
+            description: req.body.description,
+            websiteUrl: req.body.websiteUrl,
+            createdAt: new Date().toISOString(),
+            isMembership: false
+        };
+        yield db_1.client.connect();
+        const responseBlog = yield db_1.client.db('blogs').collection('blogs').insertOne(newBlog);
+        exports.blogs.push(newBlog);
+        res.status(201).send(newBlog);
+    }
+    catch (error) {
+        console.error('Ошибка при добавлении данных в коллекцию:', error);
+        res.status(500).send('Ошибка при добавлении данных в коллекцию');
+    }
 }));
 exports.blogsRouter.put('/:id', ...blogValidators, (req, res) => {
     console.log(req.headers, 'req.headers');
-    let findBlogToUpdate = exports.blogs.find(b => b.id === req.params.id);
+    let findBlogToUpdate = exports.blogs.find(b => String(b._id) === req.params.id);
     if (!findBlogToUpdate) {
         res.sendStatus(404);
         return;
     }
     else {
         exports.blogs.forEach(b => {
-            if (b.id === req.params.id) {
+            if (String(b._id) === req.params.id) {
                 b.name = req.body.name;
                 b.description = req.body.description;
                 b.websiteUrl = req.body.websiteUrl;
@@ -68,7 +97,7 @@ exports.blogsRouter.put('/:id', ...blogValidators, (req, res) => {
     }
 });
 exports.blogsRouter.delete('/:id', auth_validation_1.authorizationMiddleware, blogs_validation_1.blogIdValidation, (req, res) => {
-    let findBlogToDeleteIndex = exports.blogs.findIndex(b => b.id === req.params.id);
+    let findBlogToDeleteIndex = exports.blogs.findIndex(b => String(b._id) === req.params.id);
     if (findBlogToDeleteIndex > -1) {
         exports.blogs.splice(findBlogToDeleteIndex, 1);
         res.sendStatus(204);

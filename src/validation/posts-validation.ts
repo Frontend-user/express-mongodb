@@ -21,7 +21,7 @@ export  const postContentValidation = body('content').trim().isLength({min: 4, m
 export const postBlogIdValidation = body('blogId').trim().isLength({min: 1, max: 300}).isString().custom((value, {req})=>{
     let validIds = []
     for(const blog of blogs){
-        validIds.push(blog.id)
+        validIds.push(blog._id)
     }
     if(!validIds.includes(value)){
         throw new Error('blogId is wrong');
