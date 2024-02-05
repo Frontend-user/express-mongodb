@@ -18,18 +18,22 @@ export  const postContentValidation = body('content').trim().isLength({min: 4, m
     field: 'content'
 })
 
-export const postBlogIdValidation = body('blogId').trim().isLength({min: 1, max: 300}).isString().custom((value, {req})=>{
-    let validIds = []
-    for(const blog of blogs){
-        validIds.push(blog._id)
-    }
-    if(!validIds.includes(value)){
-        throw new Error('blogId is wrong');
-    }
-    return true;
-}).withMessage({
-    message: 'blogId is wrong',
-    field: 'blogId'
+// export const postBlogIdValidation = body('blogId').trim().isLength({min: 1, max: 300}).isString().custom((value, {req})=>{
+//     let validIds = []
+//     for(const blog of blogs){
+//         validIds.push(blog.id)
+//     }
+//     if(!validIds.includes(value)){
+//         throw new Error('blogId is wrong');
+//     }
+//     return true;
+// }).withMessage({
+//     message: 'blogId is wrong',
+//     field: 'blogId'
+// })
+export const postBlogIdValidation = body('blogId').trim().isLength({min: 1, max: 300}).withMessage({
+    message: 'id is wrong',
+    field: 'id'
 })
 export const postIdValidation = body('id').trim().isLength({min: 1, max: 300}).isString().withMessage({
     message: 'id is wrong',

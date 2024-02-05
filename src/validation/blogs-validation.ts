@@ -26,10 +26,11 @@ export  const blogWebUrlValidation2 =  body('websiteUrl').trim().isLength({min: 
     field: 'websiteUrl'
 })
 
-export const blogIdValidation = body('id').trim().isLength({min: 1, max: 300}).isString().withMessage({
+export const blogIdValidation = body('id').trim().isLength({min: 1, max: 300}).withMessage({
     message: 'id is wrong',
     field: 'id'
 })
+
 export const inputValidationMiddleware = (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req).array({onlyFirstError:true})
     if (errors.length) {

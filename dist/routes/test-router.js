@@ -9,16 +9,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const db_1 = require("./repositories/db");
-const app_1 = require("./app");
-const PORT = 3000;
-app_1.app.get('/', (req, res) => {
-    res.send('w');
-});
-const startApp = () => __awaiter(void 0, void 0, void 0, function* () {
-    yield (0, db_1.runDb)();
-    app_1.app.listen(PORT, () => {
-        console.log(`START on PORT ${PORT}`);
-    });
-});
-startApp();
+exports.testRouter = void 0;
+const express_1 = require("express");
+const db_1 = require("../repositories/db");
+exports.testRouter = (0, express_1.Router)({});
+exports.testRouter.delete('/all-data', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield db_1.client.connect();
+        yield db_1.client.db('blogs').collection('blogs').deleteMany({});
+        res.sendStatus(204);
+    }
+    catch (error) {
+        console.error('Ошибка при попытке удалить все данные из бд');
+    }
+}));

@@ -14,7 +14,7 @@ const express_1 = require("express");
 const blogs_validation_1 = require("../validation/blogs-validation");
 const auth_validation_1 = require("../validation/auth-validation");
 const db_1 = require("../repositories/db");
-// import {ObjectId} from "mongodb";
+const mongodb_custom_crud_1 = require("../services/mongodb-custom-crud");
 const { ObjectId } = require('mongodb');
 const blogValidators = [
     auth_validation_1.authorizationMiddleware,
@@ -27,84 +27,88 @@ const blogValidators = [
 exports.blogs = [];
 exports.blogsRouter = (0, express_1.Router)({});
 exports.blogsRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // const blogs = await client.db('blogs').collection('blogs').find({})
-    // const blogs =  await getData()
-    // console.log(blogs,'blogs')
-    // res.status(200).send([])
-    try {
-        yield db_1.client.connect();
-        const blogsCollection = yield db_1.client.db('blogs').collection('blogs').find({}).toArray();
-        res.status(200).send(blogsCollection);
-    }
-    catch (error) {
-        console.error('Ошибка при получении данных из коллекции:', error);
-        res.status(500).send('Ошибка при получении данных из коллекции');
-    }
+    yield (0, mongodb_custom_crud_1.mongodbGetAll)(res, 'blogs', 'blogs');
+    // try {
+    //     await client.connect()
+    //     const blogsCollection = await client.db('blogs').collection('blogs').find({}).toArray();
+    //     const fixArrayIds = blogsCollection.map((item => changeIdFormat(item)))
+    //     res.status(200).send(fixArrayIds)
+    // } catch (error) {
+    //     console.error('Ошибка при получении данных из коллекции:', error);
+    //     res.status(500).send('Ошибка при получении данных из коллекции');
+    // }
 }));
 exports.blogsRouter.get('/:id', blogs_validation_1.blogIdValidation, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, mongodb_custom_crud_1.mongodbGetById)(res, 'blogs', 'blogs', req.params.id);
+}));
+exports.blogsRouter.post('/', ...blogValidators, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // try {
+    const newBlog = {
+        name: req.body.name,
+        description: req.body.description,
+        websiteUrl: req.body.websiteUrl,
+        createdAt: new Date().toISOString(),
+        isMembership: false
+    };
+    yield (0, mongodb_custom_crud_1.mongodbCreate)(res, 'blogs', 'blogs', newBlog);
+    // await client.connect()
+    // const response = await client.db('blogs').collection('blogs').insertOne(newBlog)
+    // if (response.insertedId) {
+    //     let createdBlog:BlogType = await client.db('blogs').collection('blogs')
+    //         .findOne({ _id: response.insertedId }) as BlogType;
+    //     if(createdBlog){
+    //         let newBLog = changeIdFormat(createdBlog)
+    //         res.status(201).send(newBLog)
+    //     }
+    //
+    // } else {
+    //     res.status(500).send('Ошибка при добавлении данных в коллекцию');
+    // }
+    // } catch (error) {
+    //     console.error('Ошибка при добавлении данных в коллекцию:', error);
+    //     res.status(500).send('Ошибка при добавлении данных в коллекцию');
+    //
+    // }
+}));
+exports.blogsRouter.put('/:id', ...blogValidators, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield db_1.client.connect();
-        const responseBlog = yield db_1.client.db('blogs').collection('blogs').findOne({ _id: new ObjectId(req.params.id) });
-        // console.log(responseBlog)
-        if (responseBlog) {
-            res.status(200).send(responseBlog);
+        let result = yield db_1.client.db('blogs').collection('blogs').updateOne({ _id: new ObjectId(req.params.id) }, {
+            $set: {
+                name: req.body.name,
+                description: req.body.description,
+                websiteUrl: req.body.websiteUrl,
+            }
+        });
+        if (result.matchedCount === 1) {
+            res.sendStatus(204);
+            return;
         }
         else {
             res.sendStatus(404);
+            return;
         }
     }
     catch (error) {
-        console.error('Ошибка при получении данных из коллекции:', error);
         res.sendStatus(404);
     }
 }));
-exports.blogsRouter.post('/', ...blogValidators, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.blogsRouter.delete('/:id', auth_validation_1.authorizationMiddleware, blogs_validation_1.blogIdValidation, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const newBlog = {
-            name: req.body.name,
-            description: req.body.description,
-            websiteUrl: req.body.websiteUrl,
-            createdAt: new Date().toISOString(),
-            isMembership: false
-        };
         yield db_1.client.connect();
-        const responseBlog = yield db_1.client.db('blogs').collection('blogs').insertOne(newBlog);
-        exports.blogs.push(newBlog);
-        res.status(201).send(newBlog);
+        const responseBlog = yield db_1.client.db('blogs').collection('blogs').deleteOne({ _id: new ObjectId(req.params.id) });
+        console.log(responseBlog, 'responseBlog');
+        if (responseBlog.deletedCount) {
+            res.sendStatus(204);
+            return;
+        }
+        else {
+            res.sendStatus(404);
+            return;
+        }
     }
     catch (error) {
-        console.error('Ошибка при добавлении данных в коллекцию:', error);
-        res.status(500).send('Ошибка при добавлении данных в коллекцию');
+        res.sendStatus(404);
     }
+    // }
 }));
-exports.blogsRouter.put('/:id', ...blogValidators, (req, res) => {
-    console.log(req.headers, 'req.headers');
-    let findBlogToUpdate = exports.blogs.find(b => String(b._id) === req.params.id);
-    if (!findBlogToUpdate) {
-        res.sendStatus(404);
-        return;
-    }
-    else {
-        exports.blogs.forEach(b => {
-            if (String(b._id) === req.params.id) {
-                b.name = req.body.name;
-                b.description = req.body.description;
-                b.websiteUrl = req.body.websiteUrl;
-            }
-        });
-        res.sendStatus(204);
-        return;
-    }
-});
-exports.blogsRouter.delete('/:id', auth_validation_1.authorizationMiddleware, blogs_validation_1.blogIdValidation, (req, res) => {
-    let findBlogToDeleteIndex = exports.blogs.findIndex(b => String(b._id) === req.params.id);
-    if (findBlogToDeleteIndex > -1) {
-        exports.blogs.splice(findBlogToDeleteIndex, 1);
-        res.sendStatus(204);
-        return;
-    }
-    else {
-        res.sendStatus(404);
-        return;
-    }
-});

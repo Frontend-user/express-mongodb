@@ -22,7 +22,7 @@ exports.blogWebUrlValidation2 = (0, express_validator_1.body)('websiteUrl').trim
     message: 'websiteUrl is wrong',
     field: 'websiteUrl'
 });
-exports.blogIdValidation = (0, express_validator_1.body)('id').trim().isLength({ min: 1, max: 300 }).isString().withMessage({
+exports.blogIdValidation = (0, express_validator_1.body)('id').trim().isLength({ min: 1, max: 300 }).withMessage({
     message: 'id is wrong',
     field: 'id'
 });

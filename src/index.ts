@@ -9,21 +9,6 @@ app.get('/', (req: Request, res: Response) => {
 })
 
 
-
-app.delete('/testing/all-data', async (req: Request, res: Response) => {
-try {
-    await client.connect()
-
-    await client.db('blogs').collection('blogs').deleteMany({});
-
-    res.sendStatus(204)
-
-}catch (error){
-    console.error('Ошибка при попытке удалить все данные из бд')
-}
-})
-
-
 const startApp = async () => {
     await runDb()
     app.listen(PORT, () => {
