@@ -14,3 +14,4 @@ exports.app.use(jsonBodyMiddleware);
 exports.app.use('/blogs', blogs_router_1.blogsRouter);
 exports.app.use('/posts', posts_router_1.postsRouter);
 exports.app.use('/testing', test_router_1.testRouter);
+// MIDlawre expres для обработки ошибок

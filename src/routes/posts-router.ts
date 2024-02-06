@@ -1,7 +1,8 @@
 import {Router, Request, Response} from "express";
-import {PostType} from "../types/post-type";
+import {PostCreateType, PostViewType} from "../types/post-type";
 import {authorizationMiddleware} from "../validation/auth-validation";
 import {
+    postBlogIdExistValidation,
     postBlogIdValidation,
     postContentValidation,
     postDescValidation,
@@ -9,7 +10,11 @@ import {
     postTitleValidation
 } from "../validation/posts-validation";
 import {inputValidationMiddleware} from "../validation/blogs-validation";
-import {mongodbCreate, mongodbGetAll, mongodbGetById} from "../services/mongodb-custom-crud";
+import {postsRepositories} from "../repositories/posts-repositories";
+import {blogsRepositories} from "../repositories/blogs-repositories";
+import {HTTP_STATUSES} from "../constants/http-statuses";
+import {BlogCreateType, BlogViewType} from "../types/blog-type";
+import {ObjectId} from "mongodb";
 
 const postValidators = [
     authorizationMiddleware,
@@ -17,40 +22,47 @@ const postValidators = [
     postDescValidation,
     postContentValidation,
     postBlogIdValidation,
+    postBlogIdExistValidation,
     inputValidationMiddleware
 ]
 
 export const postsRouter = Router({})
-const posts: PostType[] = []
-
-
 
 
 postsRouter.get('/',
     async (req: Request, res: Response) => {
-        await mongodbGetAll( res, 'blogs', 'posts')
-
+        try {
+            const posts = await postsRepositories.getPosts()
+            res.status(HTTP_STATUSES.OK_200).send(posts)
+        } catch (error) {
+            console.error('Ошибка при получении данных из коллекции:', error);
+            res.status(HTTP_STATUSES.SERVER_ERROR_500)
+        }
     })
 
 
 postsRouter.get('/:id',
     postIdValidation,
     async (req: Request, res: Response) => {
-        // let findedPost = posts.filter(b => b.id === req.params.id)[0]
-        // if (findedPost) {
-        //     res.status(200).send(findedPost)
-        // } else {
-        //     res.sendStatus(404)
-        // }
-        await mongodbGetById(res, 'blogs', 'posts', req.params.id)
+        try {
+            const post = await postsRepositories.getPostById(req.params.id)
+            if (!post) {
+                res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
+                return
+            }
 
+            res.status(HTTP_STATUSES.OK_200).send(post)
+
+        } catch (error) {
+            res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
+        }
     }
 )
 
 postsRouter.post('/',
     ...postValidators,
     async (req: Request, res: Response) => {
-        let newPost: PostType = {
+        let newPost: PostCreateType = {
             title: req.body.title,
             shortDescription: req.body.shortDescription,
             content: req.body.content,
@@ -60,47 +72,65 @@ postsRouter.post('/',
             isMembership: false
 
         }
-        await mongodbCreate(res, 'blogs', 'posts', newPost)
+
+        try {
+            const respone = await postsRepositories.createPost(newPost)
+            console.log(typeof respone, 'type')
+            if (!respone) {
+                res.sendStatus(HTTP_STATUSES.SERVER_ERROR_500)
+                return
+            } else if (typeof respone === 'object') {
+                const createdPost: PostViewType | boolean = await postsRepositories.getPostById(respone)
+                res.status(HTTP_STATUSES.CREATED_201).send(createdPost)
+            }
+
+
+        } catch (error) {
+            res.sendStatus(HTTP_STATUSES.SERVER_ERROR_500)
+        }
+
 
     })
 
-// postsRouter.put('/:id',
-//     ...postValidators,
-//     (req: Request, res: Response) => {
-//         console.log(req.headers, 'req.headers')
-//         let postToUpdate = posts.find(b => b.id === req.params.id)
-//         if (!postToUpdate) {
-//             res.sendStatus(404)
-//             return
-//         } else {
-//             posts.forEach(b => {
-//                 if (b.id === req.params.id) {
-//                     b.title = req.body.title
-//                     b.shortDescription = req.body.shortDescription
-//                     b.content = req.body.content
-//                     b.blogId = req.body.blogId
-//                     res.sendStatus(204)
-//                     return
-//                 }
-//
-//             })
-//
-//         }
-//     })
+postsRouter.put('/:id',
+    ...postValidators,
+    async (req: Request, res: Response) => {
+        let postDataToUpdate = {
+            title: req.body.title,
+            shortDescription: req.body.shortDescription,
+            content: req.body.content,
+            blogId: req.body.blogId
+    }
+    try {
+            const respone: boolean = await postsRepositories.updatePost(new ObjectId(req.params.id), postDataToUpdate)
+            if (respone) {
+                res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
+                return
+            } else {
+                res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
+                return
+            }
+        } catch (error) {
+            res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
+        }
+    })
 
 
+postsRouter.delete('/:id',
+    authorizationMiddleware,
+    postIdValidation,
+   async (req: Request, res: Response) => {
+        try {
+            const response: boolean = await postsRepositories.deletePost(new ObjectId(req.params.id))
+            if (response) {
+                res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
+                return
+            } else {
+                res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
+                return
+            }
 
-// postsRouter.delete('/:id',
-//     authorizationMiddleware,
-//     postIdValidation,
-//     (req: Request, res: Response) => {
-//         let postToDeleteIndex = posts.findIndex(b => b.id === req.params.id)
-//         if (postToDeleteIndex > -1) {
-//             posts.splice(postToDeleteIndex, 1)
-//             res.sendStatus(204)
-//             return;
-//         } else {
-//             res.sendStatus(404)
-//             return
-//         }
-//     })
+        } catch (error) {
+            res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
+        }
+    })

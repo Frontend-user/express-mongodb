@@ -9,64 +9,83 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mongodbCreate = exports.mongodbGetById = exports.mongodbGetAll = exports.changeIdFormat = void 0;
-const db_1 = require("../repositories/db");
-const mongodb_1 = require("mongodb");
+exports.mongodbPut = exports.mongodbCreate = exports.mongodbGetById = exports.mongodbGetAll = exports.blogsRep = exports.changeIdFormat = void 0;
 const changeIdFormat = (obj) => {
     obj.id = obj._id;
     delete obj._id;
     return obj;
 };
 exports.changeIdFormat = changeIdFormat;
+exports.blogsRep = {};
 const mongodbGetAll = (res, dbName, collectionName) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        yield db_1.client.connect();
-        const getArray = yield db_1.client.db(dbName).collection(collectionName).find({}).toArray();
-        const fixArrayIds = getArray.map((item => (0, exports.changeIdFormat)(item)));
-        res.status(200).send(fixArrayIds);
-    }
-    catch (error) {
-        console.error('Ошибка при получении данных из коллекции:', error);
-        res.status(500).send('Ошибка при получении данных из коллекции');
-    }
+    // try {
+    //     await client.connect()
+    //     const getArray = await client.db(dbName).collection(collectionName).find({}).toArray();
+    //     const fixArrayIds = getArray.map((item => changeIdFormat(item)))
+    //     res.status(200).send(fixArrayIds)
+    // } catch (error) {
+    //     console.error('Ошибка при получении данных из коллекции:', error);
+    //     res.status(500).send('Ошибка при получении данных из коллекции');
+    // }
 });
 exports.mongodbGetAll = mongodbGetAll;
 const mongodbGetById = (res, dbName, collectionName, id) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        yield db_1.client.connect();
-        const item = yield db_1.client.db(dbName).collection(collectionName).findOne({ _id: new mongodb_1.ObjectId(id) });
-        if (item) {
-            let changedItem = (0, exports.changeIdFormat)(item);
-            res.status(200).send(changedItem);
-        }
-        else {
-            res.sendStatus(404);
-        }
-    }
-    catch (error) {
-        console.error('Ошибка при получении данных из коллекции:', error);
-        res.sendStatus(404);
-    }
+    // try {
+    //     await client.connect()
+    //     const item = await client.db(dbName).collection(collectionName).findOne({_id: new ObjectId(id)})
+    //     if (item) {
+    //         let changedItem = changeIdFormat(item)
+    //         res.status(200).send(changedItem)
+    //     } else {
+    //         res.sendStatus(404)
+    //     }
+    //
+    // } catch (error) {
+    //     console.error('Ошибка при получении данных из коллекции:', error);
+    //     res.sendStatus(404)
+    //
+    // }
 });
 exports.mongodbGetById = mongodbGetById;
 const mongodbCreate = (res, dbName, collectionName, newItem) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        yield db_1.client.connect();
-        const response = yield db_1.client.db(dbName).collection(collectionName).insertOne(newItem);
-        if (response.insertedId) {
-            let findNewItem = yield db_1.client.db(dbName).collection(collectionName).findOne({ _id: response.insertedId });
-            if (findNewItem) {
-                let sendNewItem = (0, exports.changeIdFormat)(findNewItem);
-                res.status(201).send(sendNewItem);
-            }
-        }
-        else {
-            res.status(500).send('Ошибка при добавлении данных в коллекцию');
-        }
-    }
-    catch (error) {
-        console.error('Ошибка при добавлении данных в коллекцию:', error);
-        res.status(500).send('Ошибка при добавлении данных в коллекцию');
-    }
+    //
+    // try {
+    //     // await client.connect()
+    //     const response = await blogsCollection.insertOne(newItem)
+    //     if (response.insertedId) {
+    //         let findNewItem = await client.db(dbName).collection(collectionName).findOne({_id: response.insertedId});
+    //         if (findNewItem) {
+    //             let sendNewItem = changeIdFormat(findNewItem)
+    //             res.status(201).send(sendNewItem)
+    //         }
+    //
+    //     } else {
+    //         res.status(500).send('Ошибка при добавлении данных в коллекцию');
+    //     }
+    // } catch (error) {
+    //     console.error('Ошибка при добавлении данных в коллекцию:', error);
+    //     res.status(500).send('Ошибка при добавлении данных в коллекцию');
+    //
+    // }
 });
 exports.mongodbCreate = mongodbCreate;
+const mongodbPut = (res, dbName, collectionName, id, itemToUpdate) => __awaiter(void 0, void 0, void 0, function* () {
+    // try {
+    //     await client.connect()
+    //     let result = await client.db(dbName).collection(collectionName).updateOne({_id: new ObjectId(id)},
+    //         {
+    //             $set: itemToUpdate
+    //         })
+    //     if (result.matchedCount === 1) {
+    //         res.sendStatus(204)
+    //         return
+    //     } else {
+    //         res.sendStatus(404)
+    //         return
+    //
+    //     }
+    // } catch (error) {
+    //     res.sendStatus(404)
+    // }
+});
+exports.mongodbPut = mongodbPut;

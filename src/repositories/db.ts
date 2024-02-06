@@ -1,7 +1,8 @@
 import {MongoClient} from 'mongodb'
-import {BlogType} from "../types/blog-type";
+import {BlogCreateType, BlogEntityType} from "../types/blog-type";
 
 import dotenv from 'dotenv'
+import {PostCreateType} from "../types/post-type";
 dotenv.config()
 
 const url = process.env.MONGO_URL
@@ -13,7 +14,8 @@ if(!url){
 console.log('url',url)
 
 export const client = new MongoClient(url)
-
+export const blogsCollection = client.db('blogs').collection<BlogCreateType>('blogs')
+export const postsCollection = client.db('blogs').collection<PostCreateType>('posts')
 
 export const  runDb = async () =>{
     try {

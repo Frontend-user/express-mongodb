@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "yarn nodemon --inspect dist/index.js",
     "watch": "tsc -w",
-    "test": "jest --forceExit"
+    "test": "jest --forceExit -i",
+    "deploy":"yarn ngrok http 3000"
   },
   "dependencies": {
     "@types/jest": "^29.5.12",

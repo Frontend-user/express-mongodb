@@ -4,9 +4,9 @@ import {
     blogWebUrlValidation, blogWebUrlValidation2, inputValidationMiddleware
 } from "../validation/blogs-validation";
 import {authorizationMiddleware} from "../validation/auth-validation";
-import {BlogType} from "../types/blog-type";
-import {client} from "../repositories/db";
-import {changeIdFormat, mongodbCreate, mongodbGetAll, mongodbGetById} from "../services/mongodb-custom-crud";
+import {BlogCreateType, BlogUpdateType, BlogViewType} from "../types/blog-type";
+import {blogsRepositories} from "../repositories/blogs-repositories";
+import {HTTP_STATUSES} from "../constants/http-statuses";
 
 const {ObjectId} = require('mongodb');
 const blogValidators = [
@@ -17,27 +17,34 @@ const blogValidators = [
     blogWebUrlValidation2,
     inputValidationMiddleware,
 ]
-export const blogs: BlogType[] = []
+export const blogs: BlogViewType[] = []
 export const blogsRouter = Router({})
 
 
 blogsRouter.get('/',
     async (req: Request, res: Response) => {
-        await mongodbGetAll(res, 'blogs', 'blogs')
-        // try {
-        //     await client.connect()
-        //     const blogsCollection = await client.db('blogs').collection('blogs').find({}).toArray();
-        //     const fixArrayIds = blogsCollection.map((item => changeIdFormat(item)))
-        //     res.status(200).send(fixArrayIds)
-        // } catch (error) {
-        //     console.error('Ошибка при получении данных из коллекции:', error);
-        //     res.status(500).send('Ошибка при получении данных из коллекции');
-        // }
-
+        try {
+            const blogs = await blogsRepositories.getBlogs()
+            res.status(HTTP_STATUSES.OK_200).send(blogs)
+        } catch (error) {
+            console.error('Ошибка при получении данных из коллекции:', error);
+            res.status(HTTP_STATUSES.SERVER_ERROR_500)
+        }
     })
 
 blogsRouter.get('/:id', blogIdValidation, async (req: Request, res: Response) => {
-        await mongodbGetById(res, 'blogs', 'blogs', req.params.id)
+        try {
+            const blog = await blogsRepositories.getBlogById(req.params.id)
+            if (!blog) {
+                res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
+                return
+            }
+
+            res.status(HTTP_STATUSES.OK_200).send(blog)
+
+        } catch (error) {
+            res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
+        }
     }
 )
 
@@ -45,60 +52,51 @@ blogsRouter.get('/:id', blogIdValidation, async (req: Request, res: Response) =>
 blogsRouter.post('/',
     ...blogValidators,
     async (req: Request, res: Response) => {
-        // try {
-        const newBlog: BlogType = {
-            name: req.body.name,
-            description: req.body.description,
-            websiteUrl: req.body.websiteUrl,
-            createdAt: new Date().toISOString(),
-            isMembership: false
-        }
-        await mongodbCreate(res, 'blogs', 'blogs', newBlog)
-        // await client.connect()
-        // const response = await client.db('blogs').collection('blogs').insertOne(newBlog)
-        // if (response.insertedId) {
-        //     let createdBlog:BlogType = await client.db('blogs').collection('blogs')
-        //         .findOne({ _id: response.insertedId }) as BlogType;
-        //     if(createdBlog){
-        //         let newBLog = changeIdFormat(createdBlog)
-        //         res.status(201).send(newBLog)
-        //     }
-        //
-        // } else {
-        //     res.status(500).send('Ошибка при добавлении данных в коллекцию');
-        // }
-        // } catch (error) {
-        //     console.error('Ошибка при добавлении данных в коллекцию:', error);
-        //     res.status(500).send('Ошибка при добавлении данных в коллекцию');
-        //
-        // }
+        try {
+            const newBlog: BlogCreateType = {
+                name: req.body.name,
+                description: req.body.description,
+                websiteUrl: req.body.websiteUrl,
+                createdAt: new Date().toISOString(),
+                isMembership: false
+            }
+            const respone = await blogsRepositories.createBlog(newBlog)
+            console.log(typeof respone, 'type')
+            if (!respone) {
+                res.sendStatus(HTTP_STATUSES.SERVER_ERROR_500)
+                return
+            } else if (typeof respone === 'object') {
+                const createdBlog: BlogViewType | boolean = await blogsRepositories.getBlogById(respone)
+                res.status(HTTP_STATUSES.CREATED_201).send(createdBlog)
+            }
 
+
+        } catch (error) {
+            res.sendStatus(HTTP_STATUSES.SERVER_ERROR_500)
+        }
 
     })
 
 blogsRouter.put('/:id',
     ...blogValidators,
     async (req: Request, res: Response) => {
+        let blogDataToUpdate: BlogUpdateType = {
+            name: req.body.name,
+            description: req.body.description,
+            websiteUrl: req.body.websiteUrl,
+        }
+
         try {
-            await client.connect()
-            let result = await client.db('blogs').collection('blogs').updateOne({_id: new ObjectId(req.params.id)},
-                {
-                    $set: {
-                        name: req.body.name,
-                        description: req.body.description,
-                        websiteUrl: req.body.websiteUrl,
-                    }
-                })
-            if (result.matchedCount === 1) {
-                res.sendStatus(204)
+            const respone: boolean = await blogsRepositories.updateBlog(new ObjectId(req.params.id), blogDataToUpdate)
+            if (respone) {
+                res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
                 return
             } else {
-                res.sendStatus(404)
+                res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
                 return
-
             }
         } catch (error) {
-            res.sendStatus(404)
+            res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
         }
     })
 
@@ -108,21 +106,18 @@ blogsRouter.delete('/:id',
     blogIdValidation,
     async (req: Request, res: Response) => {
         try {
-            await client.connect()
-            const responseBlog = await client.db('blogs').collection('blogs').deleteOne({_id: new ObjectId(req.params.id)})
-            console.log(responseBlog, 'responseBlog')
-            if (responseBlog.deletedCount) {
-                res.sendStatus(204)
+            const response: boolean = await blogsRepositories.deleteBlog(new ObjectId(req.params.id))
+            if (response) {
+                res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
                 return
             } else {
-                res.sendStatus(404)
+                res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
                 return
             }
 
         } catch (error) {
-            res.sendStatus(404)
+            res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
         }
-        // }
     })
 
 
