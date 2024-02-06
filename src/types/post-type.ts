@@ -10,11 +10,10 @@ export type PostEntityType = {
     blogId: string
     blogName: string
     createdAt: string
-    isMembership: boolean
 }
 
 export type  PostViewType = Omit<PostEntityType, '_id'> & {
     id: string
 }
 export type  PostCreateType = Omit<PostEntityType, '_id' >
-export type PostUpdateType = Omit<PostEntityType, '_id' | 'isMembership' | 'createdAt' | 'blogName'>
+export type PostUpdateType = Omit<PostEntityType, '_id'  | 'createdAt' | 'blogName'>

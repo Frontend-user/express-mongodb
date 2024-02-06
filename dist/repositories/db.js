@@ -22,8 +22,8 @@ if (!url) {
 }
 console.log('url', url);
 exports.client = new mongodb_1.MongoClient(url);
-exports.blogsCollection = exports.client.db('blogs').collection('blogs');
-exports.postsCollection = exports.client.db('blogs').collection('posts');
+exports.blogsCollection = exports.client.db('db').collection('blogs');
+exports.postsCollection = exports.client.db('db').collection('posts');
 const runDb = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield exports.client.connect();

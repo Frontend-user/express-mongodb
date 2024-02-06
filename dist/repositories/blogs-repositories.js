@@ -23,58 +23,31 @@ exports.blogsRepositories = {
         return __awaiter(this, void 0, void 0, function* () {
             const blogs = yield db_1.blogsCollection.find({}).toArray();
             const fixArrayIds = blogs.map((item => (0, exports.changeIdFormat)(item)));
-            if (fixArrayIds.length > 0) {
-                return fixArrayIds;
-            }
-            else {
-                return [];
-            }
+            return fixArrayIds.length > 0 ? fixArrayIds : [];
         });
     },
     getBlogById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const blog = yield db_1.blogsCollection.findOne({ _id: new mongodb_1.ObjectId(id) });
-            if (blog) {
-                let changedItem = (0, exports.changeIdFormat)(blog);
-                return changedItem;
-            }
-            else {
-                return false;
-            }
+            return blog ? (0, exports.changeIdFormat)(blog) : false;
         });
     },
     createBlog(blog) {
         return __awaiter(this, void 0, void 0, function* () {
             const response = yield db_1.blogsCollection.insertOne(blog);
-            console.log(response, 'respomse');
-            if (response.insertedId) {
-                return response.insertedId;
-            }
-            else {
-                return false;
-            }
+            return response ? response.insertedId : false;
         });
     },
     updateBlog(id, updateBlog) {
         return __awaiter(this, void 0, void 0, function* () {
             const response = yield db_1.blogsCollection.updateOne({ _id: id }, { $set: updateBlog });
-            if (response.matchedCount === 1) {
-                return true;
-            }
-            else {
-                return false;
-            }
+            return response.matchedCount === 1;
         });
     },
     deleteBlog(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const response = yield db_1.blogsCollection.deleteOne({ _id: id });
-            if (response.deletedCount) {
-                return true;
-            }
-            else {
-                return false;
-            }
+            return !!response.deletedCount;
         });
     },
 };

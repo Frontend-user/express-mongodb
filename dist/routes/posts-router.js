@@ -57,20 +57,16 @@ exports.postsRouter.post('/', ...postValidators, (req, res) => __awaiter(void 0,
         content: req.body.content,
         blogId: req.body.blogId,
         blogName: 'string',
-        createdAt: new Date().toISOString(),
-        isMembership: false
+        createdAt: new Date().toISOString()
     };
     try {
-        const respone = yield posts_repositories_1.postsRepositories.createPost(newPost);
-        console.log(typeof respone, 'type');
-        if (!respone) {
-            res.sendStatus(http_statuses_1.HTTP_STATUSES.SERVER_ERROR_500);
+        const response = yield posts_repositories_1.postsRepositories.createPost(newPost);
+        if (response instanceof mongodb_1.ObjectId) {
+            const createdPost = yield posts_repositories_1.postsRepositories.getPostById(response);
+            res.status(http_statuses_1.HTTP_STATUSES.CREATED_201).send(createdPost);
             return;
         }
-        else if (typeof respone === 'object') {
-            const createdPost = yield posts_repositories_1.postsRepositories.getPostById(respone);
-            res.status(http_statuses_1.HTTP_STATUSES.CREATED_201).send(createdPost);
-        }
+        res.sendStatus(http_statuses_1.HTTP_STATUSES.SERVER_ERROR_500);
     }
     catch (error) {
         res.sendStatus(http_statuses_1.HTTP_STATUSES.SERVER_ERROR_500);
@@ -84,15 +80,8 @@ exports.postsRouter.put('/:id', ...postValidators, (req, res) => __awaiter(void 
         blogId: req.body.blogId
     };
     try {
-        const respone = yield posts_repositories_1.postsRepositories.updatePost(new mongodb_1.ObjectId(req.params.id), postDataToUpdate);
-        if (respone) {
-            res.sendStatus(http_statuses_1.HTTP_STATUSES.NO_CONTENT_204);
-            return;
-        }
-        else {
-            res.sendStatus(http_statuses_1.HTTP_STATUSES.NOT_FOUND_404);
-            return;
-        }
+        const response = yield posts_repositories_1.postsRepositories.updatePost(new mongodb_1.ObjectId(req.params.id), postDataToUpdate);
+        res.sendStatus(response ? http_statuses_1.HTTP_STATUSES.NO_CONTENT_204 : http_statuses_1.HTTP_STATUSES.NOT_FOUND_404);
     }
     catch (error) {
         res.sendStatus(http_statuses_1.HTTP_STATUSES.NOT_FOUND_404);
@@ -101,14 +90,7 @@ exports.postsRouter.put('/:id', ...postValidators, (req, res) => __awaiter(void 
 exports.postsRouter.delete('/:id', auth_validation_1.authorizationMiddleware, posts_validation_1.postIdValidation, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const response = yield posts_repositories_1.postsRepositories.deletePost(new mongodb_1.ObjectId(req.params.id));
-        if (response) {
-            res.sendStatus(http_statuses_1.HTTP_STATUSES.NO_CONTENT_204);
-            return;
-        }
-        else {
-            res.sendStatus(http_statuses_1.HTTP_STATUSES.NOT_FOUND_404);
-            return;
-        }
+        res.sendStatus(response ? http_statuses_1.HTTP_STATUSES.NO_CONTENT_204 : http_statuses_1.HTTP_STATUSES.NOT_FOUND_404);
     }
     catch (error) {
         res.sendStatus(http_statuses_1.HTTP_STATUSES.NOT_FOUND_404);

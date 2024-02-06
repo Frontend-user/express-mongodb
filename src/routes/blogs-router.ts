@@ -8,7 +8,8 @@ import {BlogCreateType, BlogUpdateType, BlogViewType} from "../types/blog-type";
 import {blogsRepositories} from "../repositories/blogs-repositories";
 import {HTTP_STATUSES} from "../constants/http-statuses";
 
-const {ObjectId} = require('mongodb');
+import {ObjectId} from "mongodb";
+
 const blogValidators = [
     authorizationMiddleware,
     blogDescValidation,
@@ -33,7 +34,6 @@ blogsRouter.get('/',
     })
 
 blogsRouter.get('/:id', blogIdValidation, async (req: Request, res: Response) => {
-        try {
             const blog = await blogsRepositories.getBlogById(req.params.id)
             if (!blog) {
                 res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
@@ -42,9 +42,6 @@ blogsRouter.get('/:id', blogIdValidation, async (req: Request, res: Response) =>
 
             res.status(HTTP_STATUSES.OK_200).send(blog)
 
-        } catch (error) {
-            res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
-        }
     }
 )
 
@@ -60,16 +57,12 @@ blogsRouter.post('/',
                 createdAt: new Date().toISOString(),
                 isMembership: false
             }
-            const respone = await blogsRepositories.createBlog(newBlog)
-            console.log(typeof respone, 'type')
-            if (!respone) {
-                res.sendStatus(HTTP_STATUSES.SERVER_ERROR_500)
-                return
-            } else if (typeof respone === 'object') {
-                const createdBlog: BlogViewType | boolean = await blogsRepositories.getBlogById(respone)
+            const response: ObjectId | false = await blogsRepositories.createBlog(newBlog)
+            if (response) {
+                const createdBlog: BlogViewType | boolean = await blogsRepositories.getBlogById(response)
                 res.status(HTTP_STATUSES.CREATED_201).send(createdBlog)
+                return
             }
-
 
         } catch (error) {
             res.sendStatus(HTTP_STATUSES.SERVER_ERROR_500)
@@ -87,14 +80,9 @@ blogsRouter.put('/:id',
         }
 
         try {
-            const respone: boolean = await blogsRepositories.updateBlog(new ObjectId(req.params.id), blogDataToUpdate)
-            if (respone) {
-                res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
-                return
-            } else {
-                res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
-                return
-            }
+            const response: boolean = await blogsRepositories.updateBlog(new ObjectId(req.params.id), blogDataToUpdate)
+            res.sendStatus(response ? HTTP_STATUSES.NO_CONTENT_204 : HTTP_STATUSES.NOT_FOUND_404)
+
         } catch (error) {
             res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
         }
@@ -107,13 +95,7 @@ blogsRouter.delete('/:id',
     async (req: Request, res: Response) => {
         try {
             const response: boolean = await blogsRepositories.deleteBlog(new ObjectId(req.params.id))
-            if (response) {
-                res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
-                return
-            } else {
-                res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
-                return
-            }
+            res.sendStatus(response ? HTTP_STATUSES.NO_CONTENT_204 : HTTP_STATUSES.NOT_FOUND_404)
 
         } catch (error) {
             res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)

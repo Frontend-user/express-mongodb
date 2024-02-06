@@ -15,7 +15,7 @@ const blogs_validation_1 = require("../validation/blogs-validation");
 const auth_validation_1 = require("../validation/auth-validation");
 const blogs_repositories_1 = require("../repositories/blogs-repositories");
 const http_statuses_1 = require("../constants/http-statuses");
-const { ObjectId } = require('mongodb');
+const mongodb_1 = require("mongodb");
 const blogValidators = [
     auth_validation_1.authorizationMiddleware,
     blogs_validation_1.blogDescValidation,
@@ -37,17 +37,12 @@ exports.blogsRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
 }));
 exports.blogsRouter.get('/:id', blogs_validation_1.blogIdValidation, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const blog = yield blogs_repositories_1.blogsRepositories.getBlogById(req.params.id);
-        if (!blog) {
-            res.sendStatus(http_statuses_1.HTTP_STATUSES.NOT_FOUND_404);
-            return;
-        }
-        res.status(http_statuses_1.HTTP_STATUSES.OK_200).send(blog);
-    }
-    catch (error) {
+    const blog = yield blogs_repositories_1.blogsRepositories.getBlogById(req.params.id);
+    if (!blog) {
         res.sendStatus(http_statuses_1.HTTP_STATUSES.NOT_FOUND_404);
+        return;
     }
+    res.status(http_statuses_1.HTTP_STATUSES.OK_200).send(blog);
 }));
 exports.blogsRouter.post('/', ...blogValidators, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -58,15 +53,11 @@ exports.blogsRouter.post('/', ...blogValidators, (req, res) => __awaiter(void 0,
             createdAt: new Date().toISOString(),
             isMembership: false
         };
-        const respone = yield blogs_repositories_1.blogsRepositories.createBlog(newBlog);
-        console.log(typeof respone, 'type');
-        if (!respone) {
-            res.sendStatus(http_statuses_1.HTTP_STATUSES.SERVER_ERROR_500);
-            return;
-        }
-        else if (typeof respone === 'object') {
-            const createdBlog = yield blogs_repositories_1.blogsRepositories.getBlogById(respone);
+        const response = yield blogs_repositories_1.blogsRepositories.createBlog(newBlog);
+        if (response) {
+            const createdBlog = yield blogs_repositories_1.blogsRepositories.getBlogById(response);
             res.status(http_statuses_1.HTTP_STATUSES.CREATED_201).send(createdBlog);
+            return;
         }
     }
     catch (error) {
@@ -80,15 +71,8 @@ exports.blogsRouter.put('/:id', ...blogValidators, (req, res) => __awaiter(void 
         websiteUrl: req.body.websiteUrl,
     };
     try {
-        const respone = yield blogs_repositories_1.blogsRepositories.updateBlog(new ObjectId(req.params.id), blogDataToUpdate);
-        if (respone) {
-            res.sendStatus(http_statuses_1.HTTP_STATUSES.NO_CONTENT_204);
-            return;
-        }
-        else {
-            res.sendStatus(http_statuses_1.HTTP_STATUSES.NOT_FOUND_404);
-            return;
-        }
+        const response = yield blogs_repositories_1.blogsRepositories.updateBlog(new mongodb_1.ObjectId(req.params.id), blogDataToUpdate);
+        res.sendStatus(response ? http_statuses_1.HTTP_STATUSES.NO_CONTENT_204 : http_statuses_1.HTTP_STATUSES.NOT_FOUND_404);
     }
     catch (error) {
         res.sendStatus(http_statuses_1.HTTP_STATUSES.NOT_FOUND_404);
@@ -96,15 +80,8 @@ exports.blogsRouter.put('/:id', ...blogValidators, (req, res) => __awaiter(void 
 }));
 exports.blogsRouter.delete('/:id', auth_validation_1.authorizationMiddleware, blogs_validation_1.blogIdValidation, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const response = yield blogs_repositories_1.blogsRepositories.deleteBlog(new ObjectId(req.params.id));
-        if (response) {
-            res.sendStatus(http_statuses_1.HTTP_STATUSES.NO_CONTENT_204);
-            return;
-        }
-        else {
-            res.sendStatus(http_statuses_1.HTTP_STATUSES.NOT_FOUND_404);
-            return;
-        }
+        const response = yield blogs_repositories_1.blogsRepositories.deleteBlog(new mongodb_1.ObjectId(req.params.id));
+        res.sendStatus(response ? http_statuses_1.HTTP_STATUSES.NO_CONTENT_204 : http_statuses_1.HTTP_STATUSES.NOT_FOUND_404);
     }
     catch (error) {
         res.sendStatus(http_statuses_1.HTTP_STATUSES.NOT_FOUND_404);

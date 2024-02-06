@@ -31,9 +31,7 @@ const inputValidationMiddleware = (req, res, next) => {
     if (errors.length) {
         let errorsForClient = [];
         for (const error of errors) {
-            // if(!errorsForClient.find(e => e.field === error.msg.field)){
             errorsForClient.push(error.msg);
-            // }
         }
         res.status(400).json({ errorsMessages: errorsForClient });
         return;
